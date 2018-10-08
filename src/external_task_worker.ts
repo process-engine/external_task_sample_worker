@@ -32,7 +32,6 @@ export class ExternalTaskSampleWorker {
 
   public initialize(): void {
     this._httpClient = new HttpClient();
-    this._httpClient.config = this.config.httpClient;
   }
 
   public start(): void {
@@ -95,14 +94,14 @@ export class ExternalTaskSampleWorker {
           ._externalTaskApiClient
           .handleServiceError(this.sampleIdentity, this.config.workerId, externalTask.id, error.message, JSON.stringify(error));
       }
+    } else {
+      const notSupportedError: string = `Invalid job configuration for ExternalTask with ID ${externalTask.id}`;
+      logger.error(notSupportedError, externalTaskInvocation);
+
+      await this
+        ._externalTaskApiClient
+        .handleServiceError(this.sampleIdentity, this.config.workerId, externalTask.id, notSupportedError, JSON.stringify(externalTask.payload));
     }
-
-    const notSupportedError: string = `Invalid job configuration for ExternalTask with ID ${externalTask.id}`;
-    logger.error(notSupportedError, externalTaskInvocation);
-
-    await this
-      ._externalTaskApiClient
-      .handleServiceError(this.sampleIdentity, this.config.workerId, externalTask.id, notSupportedError, JSON.stringify(externalTask.payload));
   }
 
   /**
