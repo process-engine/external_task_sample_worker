@@ -88,11 +88,12 @@ export class ExternalTaskSampleWorker {
         await this._externalTaskApiClient.finishExternalTask(this.sampleIdentity, this.config.workerId, externalTask.id, result);
         logger.info(`Finished processing ExternalTask with ID ${externalTask.id}.`);
       } catch (error) {
-        logger.error('Failed to finish ExternalTask!', error.message);
+        const message: string = 'Failed to execute ExternalTask!';
+        logger.error(message, error);
 
         await this
           ._externalTaskApiClient
-          .handleServiceError(this.sampleIdentity, this.config.workerId, externalTask.id, error.message, JSON.stringify(error));
+          .handleServiceError(this.sampleIdentity, this.config.workerId, externalTask.id, message, JSON.stringify(error));
       }
     } else {
       const notSupportedError: string = `Invalid job configuration for ExternalTask with ID ${externalTask.id}`;
