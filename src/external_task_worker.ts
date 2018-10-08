@@ -36,7 +36,7 @@ export class ExternalTaskSampleWorker {
   }
 
   public start(): void {
-    this._intervalTimer = setInterval(this._fetchAndProcessExternalTasks, this.config.pollingInterval);
+    this._intervalTimer = setInterval(this._fetchAndProcessExternalTasks.bind(this), this.config.pollingInterval);
   }
 
   public stop(): void {
