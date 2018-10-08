@@ -5,6 +5,7 @@ const ExternalTaskSampleWorker = require('./dist/commonjs/index').ExternalTaskSa
 function registerInContainer(container) {
 
   container.register('ExternalTaskSampleWorker', ExternalTaskSampleWorker)
+    .dependencies('ExternalTaskApiClientService')
     .configure('external_task:sample_worker')
     .singleton();
 }
