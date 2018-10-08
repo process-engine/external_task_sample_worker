@@ -64,8 +64,8 @@ export class ExternalTaskSampleWorker {
     if (availableExternalTasks.length > 0) {
       logger.info(`Found ${availableExternalTasks.length} ExternalTasks available for processing.`);
       this.stop();
-      await bluebird.each(availableExternalTasks, this._processExternalTask);
-      logger.info(`All tasks processed.`);
+      await bluebird.each(availableExternalTasks, this._processExternalTask.bind(this));
+      logger.info('All tasks processed.');
       this.start();
     }
   }
@@ -81,12 +81,20 @@ export class ExternalTaskSampleWorker {
     const externalTaskInvocation: Model.Activities.ExternalTaskInvocation = this._parseInvocation(externalTask.payload);
 
     if (externalTaskInvocation) {
-      logger.info('Invocation attached to ExternalTask: ', externalTaskInvocation);
+      try {
+        logger.info('Invocation attached to ExternalTask: ', externalTaskInvocation);
 
-      const result: any = await this._executeInvocation(externalTaskInvocation);
+        const result: any = await this._executeInvocation(externalTaskInvocation);
 
-      await this._externalTaskApiClient.finishExternalTask(this.sampleIdentity, this.config.workerId, externalTask.id, result);
-      logger.info(`Finished processing ExternalTask with ID ${externalTask.id}.`);
+        await this._externalTaskApiClient.finishExternalTask(this.sampleIdentity, this.config.workerId, externalTask.id, result);
+        logger.info(`Finished processing ExternalTask with ID ${externalTask.id}.`);
+      } catch (error) {
+        logger.error('Failed to finish ExternalTask!', error.message);
+
+        await this
+          ._externalTaskApiClient
+          .handleServiceError(this.sampleIdentity, this.config.workerId, externalTask.id, error.message, JSON.stringify(error));
+      }
     }
 
     const notSupportedError: string = `Invalid job configuration for ExternalTask with ID ${externalTask.id}`;
@@ -106,10 +114,10 @@ export class ExternalTaskSampleWorker {
    */
   private _parseInvocation(data: any): Model.Activities.ExternalTaskInvocation {
 
-    const urlProperty: Model.Base.CamundaExtensionProperty = data['url'];
-    const methodProperty: Model.Base.CamundaExtensionProperty = data['method'];
-    const headersProperty: Model.Base.CamundaExtensionProperty = data['headers'];
-    const payloadProperty: Model.Base.CamundaExtensionProperty = data['payload'];
+    const urlProperty: string = data['url'];
+    const methodProperty: string = data['method'];
+    const headersProperty: string = data['headers'];
+    const payloadProperty: string = data['payload'];
 
     if (!(urlProperty && methodProperty)) {
       return undefined;
@@ -117,10 +125,10 @@ export class ExternalTaskSampleWorker {
 
     const externalTaskInvocation: Model.Activities.ExternalTaskInvocation = new Model.Activities.ExternalTaskInvocation();
 
-    externalTaskInvocation.url = urlProperty.value;
-    externalTaskInvocation.method = methodProperty.value;
-    externalTaskInvocation.headers = headersProperty ? headersProperty.value : '{}';
-    externalTaskInvocation.payload = payloadProperty ? payloadProperty.value : '{}';
+    externalTaskInvocation.url = urlProperty;
+    externalTaskInvocation.method = methodProperty;
+    externalTaskInvocation.headers = headersProperty ? headersProperty : '{}';
+    externalTaskInvocation.payload = payloadProperty ? payloadProperty : '{}';
 
     return externalTaskInvocation;
   }
