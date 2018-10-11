@@ -34,8 +34,10 @@ export class ExternalTaskSampleWorker {
     this._httpClient = new HttpClient();
   }
 
-  public start(): void {
-    this._intervalTimer = setInterval(this._fetchAndProcessExternalTasks.bind(this), this.config.pollingInterval);
+  public start<TPayloadType, TResultType>(): void {
+    this._intervalTimer = setInterval(async() => {
+      await this._fetchAndProcessExternalTasks<TPayloadType, TResultType>();
+    }, this.config.pollingInterval);
   }
 
   public stop(): void {
@@ -50,20 +52,27 @@ export class ExternalTaskSampleWorker {
    *
    * @async
    */
-  private async _fetchAndProcessExternalTasks(): Promise<void> {
+  private async _fetchAndProcessExternalTasks<TPayloadType, TResultType>(): Promise<void> {
 
-    const availableExternalTasks: Array<ExternalTask> =
-      await this._externalTaskApiClient.fetchAndLockExternalTasks(this.sampleIdentity,
-                                                                  this.config.workerId,
-                                                                  this.config.topicName,
-                                                                  this.config.maxTasks,
-                                                                  this.config.longPollingTimeout,
-                                                                  this.config.lockDuration);
+    const availableExternalTasks: Array<ExternalTask<TPayloadType>> =
+      await this
+        ._externalTaskApiClient
+        .fetchAndLockExternalTasks<TPayloadType>(this.sampleIdentity,
+                                                 this.config.workerId,
+                                                 this.config.topicName,
+                                                 this.config.maxTasks,
+                                                 this.config.longPollingTimeout,
+                                                 this.config.lockDuration);
 
     if (availableExternalTasks.length > 0) {
       logger.info(`Found ${availableExternalTasks.length} ExternalTasks available for processing.`);
+
       this.stop();
-      await bluebird.each(availableExternalTasks, this._processExternalTask.bind(this));
+
+      await bluebird.each(availableExternalTasks, async(externalTask: ExternalTask<TPayloadType>) => {
+        return this._processExternalTask<TPayloadType, TResultType>(externalTask);
+      });
+
       logger.info('All tasks processed.');
       this.start();
     }
@@ -74,7 +83,7 @@ export class ExternalTaskSampleWorker {
    *
    * @async
    */
-  private async _processExternalTask(externalTask: ExternalTask): Promise<void> {
+  private async _processExternalTask<TPayloadType, TResultType>(externalTask: ExternalTask<TPayloadType>): Promise<void> {
 
     logger.info(`Processing ExternalTask ${externalTask.id}.`);
     const externalTaskInvocation: Model.Activities.ExternalTaskInvocation = this._parseInvocation(externalTask.payload);
@@ -83,9 +92,10 @@ export class ExternalTaskSampleWorker {
       try {
         logger.info('Invocation attached to ExternalTask: ', externalTaskInvocation);
 
-        const result: any = await this._executeInvocation(externalTaskInvocation);
+        const result: TResultType = await this._executeInvocation<TResultType>(externalTaskInvocation);
 
-        await this._externalTaskApiClient.finishExternalTask(this.sampleIdentity, this.config.workerId, externalTask.id, result);
+        await this._externalTaskApiClient.finishExternalTask<TResultType>(this.sampleIdentity, this.config.workerId, externalTask.id, result);
+
         logger.info(`Finished processing ExternalTask with ID ${externalTask.id}.`);
       } catch (error) {
         const message: string = 'Failed to execute ExternalTask!';
@@ -140,7 +150,7 @@ export class ExternalTaskSampleWorker {
    * @param   invocation The invocation to execute.
    * @returns            The result of the HTTP request.
    */
-  private async _executeInvocation(invocation: Model.Activities.ExternalTaskInvocation): Promise<any> {
+  private async _executeInvocation<TResultType>(invocation: Model.Activities.ExternalTaskInvocation): Promise<TResultType> {
 
     const method: string = invocation.method.toLowerCase();
 
@@ -154,14 +164,14 @@ export class ExternalTaskSampleWorker {
 
     logger.info('Calling: ', invocation.url);
     if (method === 'get') {
-      result = await this._httpClient.get<any>(invocation.url, options);
+      result = await this._httpClient.get<TResultType>(invocation.url, options);
     } else {
       result = await this._httpClient[method](invocation.url, invocation.payload, options);
     }
 
     logger.info('Received the following response: ', result);
 
-    return result;
+    return <TResultType> result;
   }
 
 }
