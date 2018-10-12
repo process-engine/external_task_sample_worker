@@ -81,7 +81,7 @@ export class ExternalTaskSampleWorker {
 
     logger.info(`Processing ExternalTask ${externalTask.id}.`);
 
-    const result: TResult = await this._getSampleResult(externalTask.payload);
+    const result: TResult = await this._getSampleResult<TPayload>(externalTask.payload);
 
     await this._externalTaskApiClient.finishExternalTask<TResult>(this._sampleIdentity, this.config.workerId, externalTask.id, result);
 
@@ -94,7 +94,7 @@ export class ExternalTaskSampleWorker {
    *
    * @returns The sample result.
    */
-  private _getSampleResult(payload: any): any {
+  private _getSampleResult<TPayload>(payload: TPayload): any {
 
     const sampleResult: any = {
       testResults: payload,
