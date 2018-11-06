@@ -4,7 +4,6 @@ import {Logger} from 'loggerhythm';
 import {IIdentity} from '@essential-projects/iam_contracts';
 
 import {ExternalTask, IExternalTaskApi} from '@process-engine/external_task_api_contracts';
-import {Model} from '@process-engine/process_engine_contracts';
 
 const logger: Logger = Logger.createLogger('processengine:external_task:sample_worker');
 
