@@ -1,6 +1,6 @@
 {
   "name": "@process-engine/external_task_sample_worker",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Contains an example implementation for a worker that can be used to fetch and process ExternalTasks through the ExternalTask API.",
   "main": "dist/commonjs/index.js",
   "typings": "dist/index.d.ts",
