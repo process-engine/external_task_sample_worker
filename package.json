@@ -21,7 +21,6 @@
     "@essential-projects/errors_ts": "~1.4.0",
     "@essential-projects/http_contracts": "~2.3.0",
     "@essential-projects/http": "~2.2.0",
-    "@essential-projects/iam_contracts": "~3.3.0",
     "@process-engine/external_task_api_contracts": "~1.0.0",
     "bluebird": "~3.5.2",
     "loggerhythm": "^3.0.3"
