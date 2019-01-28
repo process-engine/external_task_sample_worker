@@ -20,7 +20,8 @@ export class ExternalTaskSampleWorker {
   private _intervalTimer: any;
 
   private _sampleIdentity: IIdentity = {
-    token: 'defaultUser',
+    token: 'ZHVtbXlfdG9rZW4=',
+    userId: 'defaultUser',
   };
 
   constructor(externalTaskApiClient: IExternalTaskApi) {
