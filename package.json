@@ -1,6 +1,6 @@
 {
   "name": "@process-engine/external_task_sample_worker",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "Contains an example implementation for a worker that can be used to fetch and process ExternalTasks through the ExternalTask API.",
   "main": "dist/commonjs/index.js",
   "typings": "dist/index.d.ts",
@@ -23,6 +23,7 @@
     "@essential-projects/http": "~2.2.0",
     "@process-engine/external_task_api_contracts": "~1.0.0",
     "bluebird": "~3.5.2",
+    "jsonwebtoken": "~8.4.0",
     "loggerhythm": "^3.0.3"
   },
   "devDependencies": {
