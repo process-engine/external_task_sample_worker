@@ -1,7 +1,9 @@
+import * as jsonwebtoken from 'jsonwebtoken';
+
 import * as bluebird from 'bluebird';
 import {Logger} from 'loggerhythm';
 
-import {IIdentity} from '@essential-projects/iam_contracts';
+import {IIdentity, IIdentityService, TokenBody} from '@essential-projects/iam_contracts';
 
 import {ExternalTask, IExternalTaskApi} from '@process-engine/external_task_api_contracts';
 
@@ -16,16 +18,31 @@ export class ExternalTaskSampleWorker {
   public config: any;
 
   private _externalTaskApiClient: IExternalTaskApi;
+  private _identityService: IIdentityService;
 
   private _intervalTimer: any;
 
-  private _sampleIdentity: IIdentity = {
-    token: 'ZHVtbXlfdG9rZW4=',
-    userId: 'defaultUser',
-  };
+  private _sampleIdentity: IIdentity;
 
-  constructor(externalTaskApiClient: IExternalTaskApi) {
+  constructor(externalTaskApiClient: IExternalTaskApi, identityService: IIdentityService) {
     this._externalTaskApiClient = externalTaskApiClient;
+    this._identityService = identityService;
+  }
+
+  public async initialize(): Promise<void> {
+
+    const tokenBody: TokenBody = {
+      sub: this.config.workerId || 'dummy_token',
+      name: 'sample_worker',
+    };
+
+    const signOptions: jsonwebtoken.SignOptions = {
+      expiresIn: 60,
+    };
+
+    const encodedToken: string = jsonwebtoken.sign(tokenBody, 'randomkey', signOptions);
+
+    this._sampleIdentity = await this._identityService.getIdentity(encodedToken);
   }
 
   public start<TPayload, TResult>(): void {
