@@ -1,6 +1,6 @@
 {
   "name": "@process-engine/external_task_sample_worker",
-  "version": "1.1.8",
+  "version": "1.1.10",
   "description": "Contains an example implementation for a worker that can be used to fetch and process ExternalTasks through the ExternalTask API.",
   "main": "dist/commonjs/index.js",
   "typings": "dist/index.d.ts",
@@ -18,12 +18,10 @@
   },
   "homepage": "https://github.com/process-engine/consumer_api#readme",
   "dependencies": {
-    "@essential-projects/errors_ts": "~1.4.0",
-    "@essential-projects/http_contracts": "~2.3.0",
-    "@essential-projects/http": "~2.2.0",
-    "@process-engine/external_task_api_contracts": "~1.0.0",
-    "bluebird": "~3.5.2",
-    "jsonwebtoken": "~8.4.0",
+    "@essential-projects/iam_contracts": "^3.4.1",
+    "@process-engine/external_task_api_contracts": "^1.0.0",
+    "bluebird": "^3.5.2",
+    "jsonwebtoken": "^8.4.0",
     "loggerhythm": "^3.0.3"
   },
   "devDependencies": {
@@ -31,7 +29,7 @@
     "@types/node": "^10.12.10",
     "gulp": "^4.0.0",
     "gulptraum": "^3.0.0",
-    "gulptraum-typescript": "^2.0.0",
+    "gulptraum-typescript": "^3.0.0",
     "tsconfig": "^7.0.0",
     "tslint": "^5.11.0",
     "typescript": "^3.1.6"
