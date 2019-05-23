@@ -17,16 +17,16 @@ export class ExternalTaskSampleWorker {
 
   public config: any;
 
-  private _externalTaskApiClient: IExternalTaskApi;
-  private _identityService: IIdentityService;
+  private externalTaskApiClient: IExternalTaskApi;
+  private identityService: IIdentityService;
 
-  private _intervalTimer: any;
+  private intervalTimer: NodeJS.Timeout;
 
-  private _sampleIdentity: IIdentity;
+  private sampleIdentity: IIdentity;
 
   constructor(externalTaskApiClient: IExternalTaskApi, identityService: IIdentityService) {
-    this._externalTaskApiClient = externalTaskApiClient;
-    this._identityService = identityService;
+    this.externalTaskApiClient = externalTaskApiClient;
+    this.identityService = identityService;
   }
 
   public async initialize(): Promise<void> {
@@ -40,19 +40,19 @@ export class ExternalTaskSampleWorker {
       expiresIn: 60,
     };
 
-    const encodedToken: string = jsonwebtoken.sign(tokenBody, 'randomkey', signOptions);
+    const encodedToken = jsonwebtoken.sign(tokenBody, 'randomkey', signOptions);
 
-    this._sampleIdentity = await this._identityService.getIdentity(encodedToken);
+    this.sampleIdentity = await this.identityService.getIdentity(encodedToken);
   }
 
   public start<TPayload, TResult>(): void {
-    this._intervalTimer = setInterval(async() => {
-      await this._fetchAndProcessExternalTasks<TPayload, TResult>();
+    this.intervalTimer = setInterval(async (): Promise<void> => {
+      await this.fetchAndProcessExternalTasks<TPayload, TResult>();
     }, this.config.pollingInterval);
   }
 
   public stop(): void {
-    clearInterval(this._intervalTimer);
+    clearInterval(this.intervalTimer);
   }
 
   /**
@@ -63,25 +63,24 @@ export class ExternalTaskSampleWorker {
    *
    * @async
    */
-  private async _fetchAndProcessExternalTasks<TPayload, TResult>(): Promise<void> {
+  private async fetchAndProcessExternalTasks<TPayload, TResult>(): Promise<void> {
 
-    const availableExternalTasks: Array<ExternalTask<TPayload>> =
-      await this
-        ._externalTaskApiClient
-        .fetchAndLockExternalTasks<TPayload>(this._sampleIdentity,
-                                                 this.config.workerId,
-                                                 this.config.topicName,
-                                                 this.config.maxTasks,
-                                                 this.config.longPollingTimeout,
-                                                 this.config.lockDuration);
+    const availableExternalTasks = await this.externalTaskApiClient.fetchAndLockExternalTasks<TPayload>(
+      this.sampleIdentity,
+      this.config.workerId,
+      this.config.topicName,
+      this.config.maxTasks,
+      this.config.longPollingTimeout,
+      this.config.lockDuration,
+    );
 
     if (availableExternalTasks.length > 0) {
       logger.info(`Found ${availableExternalTasks.length} ExternalTasks available for processing.`);
 
       this.stop();
 
-      await bluebird.each(availableExternalTasks, async(externalTask: ExternalTask<TPayload>) => {
-        return this._processExternalTask<TPayload, TResult>(externalTask);
+      await bluebird.each(availableExternalTasks, async (externalTask: ExternalTask<TPayload>): Promise<void> => {
+        return this.processExternalTask<TPayload, TResult>(externalTask);
       });
 
       logger.info('All tasks processed.');
@@ -94,13 +93,13 @@ export class ExternalTaskSampleWorker {
    *
    * @async
    */
-  private async _processExternalTask<TPayload, TResult>(externalTask: ExternalTask<TPayload>): Promise<void> {
+  private async processExternalTask<TPayload, TResult>(externalTask: ExternalTask<TPayload>): Promise<void> {
 
     logger.info(`Processing ExternalTask ${externalTask.id}.`);
 
-    const result: TResult = await this._getSampleResult<TPayload>(externalTask.payload);
+    const result = await this.getSampleResult<TPayload>(externalTask.payload);
 
-    await this._externalTaskApiClient.finishExternalTask<TResult>(this._sampleIdentity, this.config.workerId, externalTask.id, result);
+    await this.externalTaskApiClient.finishExternalTask<TResult>(this.sampleIdentity, this.config.workerId, externalTask.id, result);
 
     logger.info(`Finished processing ExternalTask with ID ${externalTask.id}.`);
 
@@ -111,9 +110,10 @@ export class ExternalTaskSampleWorker {
    *
    * @returns The sample result.
    */
-  private _getSampleResult<TPayload>(payload: TPayload): any {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private getSampleResult<TPayload>(payload: TPayload): any {
 
-    const sampleResult: any = {
+    const sampleResult = {
       testResults: payload,
     };
 
